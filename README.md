@@ -170,7 +170,7 @@ Launch the entire stack on a single instance.
 
     knife ec2 server create -G default -I ami-7000f019 -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[mediawiki_database_master],role[mediawiki],recipe[mediawiki::db_bootstrap],role[mediawiki_load_balancer]'
+      -r 'role[base],role[drupal_database_master],role[drupal],recipe[drupal::db_bootstrap],role[drupal_load_balancer]'
 
 Once complete, the instance will be running MySQL and MediaWiki under Apache2 + mod_php. With only one system, a load balancer is unnecessary.
 
@@ -183,25 +183,25 @@ First, launch the database instance.
 
     knife ec2 server create -G default -I ami-7000f019 -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[mediawiki_database_master]'
+      -r 'role[base],role[drupal_database_master]'
 
 Once the database master is up, launch one node that will create the database schema and set up the database with default data.
 
     knife ec2 server create -G default -I ami-7000f019 -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[mediawiki],recipe[mediawiki::db_bootstrap]' 
+      -r 'role[base],role[drupal],recipe[drupal::db_bootstrap]' 
 
 Launch the second application instance w/o the mediawiki::db_bootstrap recipe.
 
     knife ec2 server create -G default -I ami-7000f019 -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[mediawiki]' 
+      -r 'role[base],role[drupal]' 
 
 Once the second application instance is up, launch the load balancer.
 
     knife ec2 server create -G default -I ami-7000f019 -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[mediawiki_load_balancer]'
+      -r 'role[base],role[drupal_load_balancer]'
 
 Once complete, we'll have four instances running in EC2 with MySQL, MediaWiki and haproxy up and available to serve traffic.
 
