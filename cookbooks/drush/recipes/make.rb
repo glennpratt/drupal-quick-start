@@ -15,15 +15,15 @@
 # limitations under the License.
 #
 
-case node[:platform]
-when "debian", "ubuntu"
-  bash "install-drush_make" do
-    code <<-EOH
-(cd /tmp; wget http://ftp.drupal.org/files/projects/drush_make-6.x-2.2.tar.gz)
-(cd /tmp; tar zxvf drush_make-6.x-2.2.tar.gz)
-(mkdir -p ~/.drush)
-(cd /tmp; mv drush_make ~/.drush/)
-    EOH
-    not_if { File.exists?(File.expand_path("~/.drush/drush_make/drush_make.drush.inc")) }
-  end
+git "/usr/share/drush_make" do
+  repository "http://git.drupal.org/project/drush_make.git"
+  reference "6.x-2.2"
+  depth 5
+  action :sync
+end
+
+link "/usr/share/drush/commands/drush_make" do
+  to "/usr/share/drush_make"
+  not_if { ::FileTest.directory?("/usr/share/drush/commands") }
+  not_if "test -L /usr/share/drush/commands/drush_make"
 end
