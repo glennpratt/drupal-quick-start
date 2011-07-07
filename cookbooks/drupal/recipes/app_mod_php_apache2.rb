@@ -1,7 +1,10 @@
 #
-# Cookbook Name:: application
-# Recipe:: mod_php_apache2
+# Cookbook Name:: drupal
+# Recipe:: app_mod_php_apache2
 #
+# Glenn Pratt
+#
+# Based off application::mod_php_apache2
 # Copyright 2011, Opscode, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +31,8 @@ include_recipe "apache2::mod_deflate"
 include_recipe "apache2::mod_headers"
 include_recipe "apache2::mod_php5"
 
-server_aliases = [ "#{app['id']}.#{node['domain']}", node.fqdn ]
+# TODO Review wildcard alias, that could get messy.
+server_aliases = [ "#{app['id']}.#{node['domain']}", "#{app['id']}.*", node.fqdn ]
 
 # TODO - Make this generic 'cloud'.
 if node.has_key?("ec2")

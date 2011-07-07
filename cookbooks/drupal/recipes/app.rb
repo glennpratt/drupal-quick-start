@@ -1,7 +1,10 @@
 #
-# Cookbook Name:: application
-# Recipe:: php
+# Cookbook Name:: drupal
+# Recipe:: app
 #
+# Glenn Pratt
+#
+# Based off application::php
 # Copyright 2011, Opscode, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +34,8 @@ node.default['apps'][app['id']][node.chef_environment]['run_migrations'] = false
 # the PHP projects have no standard local settings file name..or path in the project
 local_settings_full_path = app['local_settings_file'] || 'LocalSettings.php'
 local_settings_file_name = local_settings_full_path.split(/[\\\/]/).last
+
+drupal_verson = app['drupal_version'] || '7'
 
 ## First, install any application specific packages
 if app['packages']
@@ -66,24 +71,31 @@ directory "#{app['deploy_to']}/shared" do
   recursive true
 end
 
-if app.has_key?("deploy_key")
-  ruby_block "write_key" do
-    block do
-      f = ::File.open("#{app['deploy_to']}/id_deploy", "w")
-      f.print(app["deploy_key"])
-      f.close
-    end
-    not_if do ::File.exists?("#{app['deploy_to']}/id_deploy"); end
-  end
+directory "#{app['deploy_to']}/shared/public_files" do
+  owner node[:apache][:user]
+  group node[:apache][:group]
+  mode '0644'
+  recursive true
+end
 
+directory "#{app['deploy_to']}/shared/private_files" do
+  owner node[:apache][:user]
+  group node[:apache][:group]
+  mode '0644'
+  recursive true
+end
+
+if app.has_key?("deploy_key")
   file "#{app['deploy_to']}/id_deploy" do
     owner app['owner']
     group app['group']
     mode '0600'
+    content app["deploy_key"]
   end
 
   template "#{app['deploy_to']}/deploy-ssh-wrapper" do
     source "deploy-ssh-wrapper.erb"
+    cookbook 'application'
     owner app['owner']
     group app['group']
     mode "0755"
@@ -108,8 +120,8 @@ if app["database_master_role"]
   # Assuming we have one...
   if dbm
     template "#{app['deploy_to']}/shared/#{local_settings_file_name}" do
-      source "#{local_settings_file_name}.erb"
-      cookbook app["id"]
+      source "#{local_settings_file_name}.#{drupal_verson}.erb"
+#      cookbook app["id"]
       owner app["owner"]
       group app["group"]
       mode "644"
@@ -137,8 +149,40 @@ deploy_revision app['id'] do
   shallow_clone true
   purge_before_symlink([])
   create_dirs_before_symlink([])
-  symlinks({})
+  symlinks "public_files" => "www/sites/default/files"
   symlink_before_migrate({
-    local_settings_file_name => local_settings_full_path
+    local_settings_file_name => local_settings_full_path,
+    "#{app['deploy_to']}/shared/public_files" => local_settings_full_path
   })
+  migrate true
+  migration_command 'drush status'
+  before_migrate do
+    # TODO bash is supposed to be synchronous and execute isn't.
+    # Is that right, what are the implications of async here?
+    if app.has_key?("drush_make_file")
+      execute "drush_make" do
+        user "root"
+        cwd release_path
+        environment ({'GIT_SSH' => "#{app['deploy_to']}/deploy-ssh-wrapper"}) if app['deploy_key']
+        command "drush make #{app['drush_make_file']} #{app['web_root']}"
+      end
+    end
+  end
+  before_restart do
+    # Fix up file dir perms.
+    # TODO - This is hard coded to apache cookbook.
+    directory "#{app['deploy_to']}/shared/public_files" do
+      owner node[:apache][:user]
+      group node[:apache][:group]
+      mode '0644'
+      recursive true
+    end
+
+    directory "#{app['deploy_to']}/shared/private_files" do
+      owner node[:apache][:user]
+      group node[:apache][:group]
+      mode '0644'
+      recursive true
+    end
+  end
 end

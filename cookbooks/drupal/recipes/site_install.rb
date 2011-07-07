@@ -21,7 +21,7 @@
 # THIS RECIPE IS DESTRUCTIVE.  It will drop all existing database tables and reload them
 
 # TODO - Don't hardcode the data bag, what if this server has multiple Drupal apps?
-app = data_bag_item("apps", "drupal")
+app = data_bag_item("apps", "store")
 
 if node.run_list.roles.include?(app["database_master_role"][0])
   dbm = node
@@ -48,7 +48,7 @@ execute "drush_site-install" do
   notifies :create, "ruby_block[remove_drupal_db_bootstrap]", :immediately
 end
 
-ruby_block "remove_drupal_db_bootstrap" do
+ruby_block "remove_drupal_site_install" do
   block do
     Chef::Log.info("Database Bootstrap completed, removing the destructive recipe[drupal::db_bootstrap]")
     node.run_list.remove("recipe[drupal::db_bootstrap]") if node.run_list.include?("recipe[drupal::db_bootstrap]")
