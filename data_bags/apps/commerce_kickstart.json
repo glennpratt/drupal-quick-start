@@ -1,0 +1,59 @@
+{
+  "id": "commerce_kickstart",
+  "server_roles": [
+    "commerce_kickstart"
+  ],
+  "type": {
+    "commerce_kickstart": [
+      "drupal::app",
+      "nfs::files_app",
+      "drupal::app_mod_php_apache2"
+    ]
+  },
+  "database_master_role": [
+    "drupal_database_master"
+  ],
+  "files_master_role": [
+    "drupal_files_master"
+  ],
+  "repository": "http://git.drupal.org/project/commerce_kickstart.git",
+  "revision": {
+    "_default": "7.x-1.0-alpha4"
+  },
+  "web_root": "www",
+  "drupal_version": "7",
+  "drush_make_file": "distro.make",
+  "force": {
+    "_default": true
+  },
+  "databases": {
+    "_default": {
+      "reconnect": "true",
+      "encoding": "utf8",
+      "collation": "utf8_general_ci",
+      "username": "db_user",
+      "adapter": "mysql",
+      "password": "awesome_password",
+      "database": "commerce_kickstart"
+    }
+  },
+  "mysql_root_password": {
+    "_default": "mysql_root"
+  },
+  "mysql_debian_password": {
+    "_default": "mysql_debian"
+  },
+  "mysql_repl_password": {
+    "_default": "mysql_repl"
+  },
+  "deploy_to": "/srv/commerce_kickstart",
+  "owner": "nobody",
+  "group": "nogroup",
+  "packages": {
+    "php5-mysql": "",
+    "php5-intl": ""
+  },
+  "pears": {
+  },
+  "local_settings_file": "www/sites/default/settings.php"
+}
