@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 
+include_recipe 'php'
+
 php_pear "Console_Table" do
   action :install
 end
