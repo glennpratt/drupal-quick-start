@@ -154,6 +154,7 @@ deploy_revision app['id'] do
     local_settings_file_name => local_settings_full_path,
     "#{app['deploy_to']}/shared/public_files" => local_settings_full_path
   })
+  # TODO drush updatedb
   migrate true
   migration_command 'drush status'
   before_migrate do
@@ -165,6 +166,17 @@ deploy_revision app['id'] do
         cwd release_path
         environment ({'GIT_SSH' => "#{app['deploy_to']}/deploy-ssh-wrapper"}) if app['deploy_key']
         command "drush make #{app['drush_make_file']} #{app['web_root']}"
+      end
+    end
+    # TODO create_dirs_before_symlink doesn't work here...
+    if app.has_key?("dirs")
+      app['dirs'].each do |path|
+        directory "#{release_path}/#{path}" do
+          owner app['owner']
+          group app['group']
+          mode '0755'
+          recursive true
+        end
       end
     end
   end
@@ -185,4 +197,17 @@ deploy_revision app['id'] do
       recursive true
     end
   end
+end
+
+# Sometimes repos are built above web root.
+if app['web_root']
+  path = ::File.join(app['deploy_to'], "current", app['web_root'])
+else
+  path = ::File.join(app['deploy_to'], "current")
+end
+
+# Enable cron via Drush
+cron "drush-cron-#{app['id']}" do
+  minute "*/5"
+  command "/usr/bin/drush --root=#{path} cron"
 end
