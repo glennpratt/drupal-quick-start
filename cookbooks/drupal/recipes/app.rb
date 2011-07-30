@@ -102,11 +102,13 @@ if app.has_key?("deploy_key")
     variables app.to_hash
   end
 end
-
+Chef::Log.info(search(:node, "*:*", nil, 0, 1).to_json)
+Chef::Log.info(search(:node, "role:#{app["database_master_role"][0]} AND chef_environment:#{node.chef_environment}", nil, 0, 1))
 if app["database_master_role"]
   dbm = nil
   # If we are the database master
   if node.run_list.roles.include?(app["database_master_role"][0])
+    Chef::Log.info('NOT what we want...')
     dbm = node
   else
   # Find the database master
@@ -117,10 +119,12 @@ if app["database_master_role"]
     end
   end
 
+
+  Chef::Log.info("dbm: " + dbm.to_json)
   # Assuming we have one...
   if dbm
     template "#{app['deploy_to']}/shared/#{local_settings_file_name}" do
-      source "#{local_settings_file_name}.#{drupal_verson}.erb"
+      source "settings.php.#{drupal_verson}.erb"
 #      cookbook app["id"]
       owner app["owner"]
       group app["group"]
@@ -141,6 +145,7 @@ end
 deploy_revision app['id'] do
   revision app['revision'][node.chef_environment]
   repository app['repository']
+  enable_submodules true
   user app['owner']
   group app['group']
   deploy_to app['deploy_to']
@@ -149,7 +154,7 @@ deploy_revision app['id'] do
   shallow_clone true
   purge_before_symlink([])
   create_dirs_before_symlink([])
-  symlinks "public_files" => "www/sites/default/files"
+  symlinks "public_files" => (app['web_root']) ? "#{app['web_root']}/sites/default/files" : "sites/default/files"
   symlink_before_migrate({
     local_settings_file_name => local_settings_full_path,
     "#{app['deploy_to']}/shared/public_files" => local_settings_full_path

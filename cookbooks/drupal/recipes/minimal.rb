@@ -4,22 +4,18 @@ require_recipe "build-essential"
 
 pkgs = value_for_platform(
   [ "centos", "redhat", "fedora" ] => {
-    "default" => %w{ pcre-devel php-mcrypt }
+    "default" => %w{ pcre-devel php-mcrypt php-mysql}
   },
   [ "debian", "ubuntu" ] => {
-    "default" => %w{ libpcre3-dev php5-mcrypt }
+    "default" => %w{ libpcre3-dev php5-mcrypt php5-mysql}
   },
-  "default" => %w{ libpcre3-dev php5-mcrypt }
+  "default" => %w{ libpcre3-dev php5-mcrypt php5-mysql}
 )
 
 pkgs.each do |pkg|
   package pkg do
     action :install
   end
-end
-
-php_pear "pdo" do
-  action :install
 end
 
 # Install APC for increased performance. rfc1867 support also provides minimal
@@ -31,6 +27,7 @@ php_pear "apc" do
 end
 
 # Install uploadprogress for better feedback during Drupal file uploads.
+# TODO Probably only want this on Apache...
 php_pear "uploadprogress" do
   action :install
 end
