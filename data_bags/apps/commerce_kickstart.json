@@ -7,7 +7,7 @@
     "commerce_kickstart": [
       "drupal::app",
       "nfs::files_app",
-      "drupal::app_mod_php_apache2"
+      "drupal::app_php_fpm_nginx"
     ]
   },
   "database_master_role": [
@@ -24,7 +24,7 @@
   "drupal_version": "7",
   "drush_make_file": "distro.make",
   "force": {
-    "_default": true
+    "_default": false
   },
   "databases": {
     "_default": {

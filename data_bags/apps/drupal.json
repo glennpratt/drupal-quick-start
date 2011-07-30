@@ -7,7 +7,7 @@
     "drupal": [
       "drupal::app",
       "nfs::files_app",
-      "mod_php_apache2"
+      "drupal::app_php_fpm_nginx"
     ]
   },
   "database_master_role": [

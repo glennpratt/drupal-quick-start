@@ -10,6 +10,5 @@ run_list(
   "recipe[drush]",
   "recipe[drush::make]",
   "recipe[drupal::minimal]",
-  "recipe[application]",
-  "recipe[drupal::status]"
+  "recipe[application]"
 )
