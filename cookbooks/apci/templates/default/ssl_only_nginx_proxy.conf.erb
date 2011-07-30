@@ -1,0 +1,38 @@
+# Nginx site configuration by Chef.
+
+# Redirect ALL requests over HTTP to HTTPS.
+server {
+    listen      80 default_server;
+    rewrite     ^(.*)   https://$host$1 permanent;
+}
+
+# Proxy HTTPS requests to Varnish.
+server {
+  listen  443 default_server ssl;
+
+  ssl_certificate /usr/local/ssl/certificates/wildcard.qs.local.pem;
+  ssl_certificate_key /usr/local/ssl/certificates/wildcard.qs.local.key;
+
+  ssl_ciphers ALL:!aNULL:!ADH:!eNULL:!LOW:!EXP:!kEDH:!EXPORT56:RC4+RSA:+HIGH:!3DES:!SSLv2;
+
+  keepalive_timeout 70;
+
+  access_log  <%= node[:nginx][:log_dir] %>/<%= @params[:server_name] %>.access.log;
+
+  location / {
+
+    # Forward request information to backend.
+
+    proxy_set_header X-Real-IP  $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Host $host;
+
+    # Pass request to backend.  Requests aren't passed until they are complete.
+
+    proxy_pass http://127.0.0.1:8181;
+  }
+
+  # TODO - Upload progress
+  # TODO - Public files
+}
