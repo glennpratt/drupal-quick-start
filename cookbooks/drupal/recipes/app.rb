@@ -192,14 +192,12 @@ deploy_revision app['id'] do
       owner node[:apache][:user]
       group node[:apache][:group]
       mode '0644'
-      recursive true
     end
 
     directory "#{app['deploy_to']}/shared/private_files" do
       owner node[:apache][:user]
       group node[:apache][:group]
       mode '0644'
-      recursive true
     end
   end
 end
