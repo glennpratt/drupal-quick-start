@@ -1,8 +1,7 @@
-# save this in the library folder of a cookbook 
-# (e.g. ./coookbooks/vagrant/library/chef_solo_patch.rb)
-# see also https://gist.github.com/867958 for vagrant patch
-
-# based on http://lists.opscode.com/sympa/arc/chef/2011-02/msg00000.html
+# Add search functionality for solo data bags.
+if Gem::Version.new(Chef::VERSION) < Gem::Version.new('0.10.4.rc.3')
+  raise "Please upgrade Chef!"
+end
 if Chef::Config[:solo]
   class Chef
     class Search
@@ -16,8 +15,7 @@ if Chef::Config[:solo]
           #@rest = Chef::REST.new(url ||Chef::Config[:search_url])
         end
 
-        # Search Solr for objects of a given type, for a given query. If you give
-        # it a block, it will handle the paging for you dynamically.
+        # Override Search to request locally.
         def search(type, query="*:*", sort='X_CHEF_id_CHEF_X asc', start=0, rows=1000, &block)
           raise ArgumentError, "Type must be a string or a symbol!" unless (type.kind_of?(String) || type.kind_of?(Symbol))
 
@@ -44,6 +42,10 @@ if Chef::Config[:solo]
           # TODO Sort
           def bag_query(bag, query="*:*")
             rows = []
+            Chef::Log.info("Bag %s" % [bag.to_s])
+            # TODO - Apparently Vagrant 0.8 is setting this to an array.
+            Chef::Config[:data_bag_path] = Chef::Config[:data_bag_path].first
+            Chef::Log.info("Data bag path %s" % [Chef::Config[:data_bag_path]])
             Chef::DataBag.load(bag.to_s).each do |bag_item|
               if (query == '*:*' || item_query_match(query, bag_item[1]))
                 rows << bag_item[1]
@@ -54,8 +56,7 @@ if Chef::Config[:solo]
           # Check if bag_item matches given query.
           # TODO - Support wildcards.
           def item_query_match(query, bag_item)
-            Chef::Log.info(query.to_s)
-            Chef::Log.info(bag_item.to_json)
+            Chef::Log.info("Query: %s" % [query.to_s])
             logic = Array.new
             query.split(' ').each do |fragment|
               if fragment.include?(':')
@@ -66,7 +67,8 @@ if Chef::Config[:solo]
                 logic << fragment.downcase
               end
             end
-            Chef::Log.info("Query logic %s" % [logic.join(' ')])
+            Chef::Log.info("Query logic: %s" % [logic.join(' ')])
+            Chef::Log.info(bag_item.to_json)
             return eval(logic.join(' '))
           end
       end
