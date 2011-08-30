@@ -1,8 +1,7 @@
 #
-# Cookbook Name:: xfs
-# Recipe:: default
-#
-# Copyright 2009, Opscode, Inc.
+# Author:: Seth Chisamore (<schisamo@opscode.com>)
+# Copyright:: Copyright (c) 2011 Opscode, Inc.
+# License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +16,18 @@
 # limitations under the License.
 #
 
-%w{ xfsprogs xfsdump }.each do |pkg|
-  package pkg
-end
+module Opscode
+  module Mysql
+    module Helpers
 
-package "xfslibs-dev" do
-  package_name "xfsprogs-devel" if platform?("redhat","centos","scientific","fedora")
+      def debian_before_squeeze?
+        platform?("debian") && (node.platform_version.to_f < 6.0)
+      end
+
+      def ubuntu_before_lucid?
+        platform?("ubuntu") && (node.platform_version.to_f < 10.0)
+      end
+
+    end
+  end
 end

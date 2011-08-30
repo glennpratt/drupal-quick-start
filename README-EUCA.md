@@ -1,15 +1,10 @@
 This guide describes how to build a PHP application stack using Chef cookbooks available from the [Cookbooks Community Site](http://cookbooks.opscode.com) and Opscode's Hosted Chef. It assumes you followed the [Getting Started Guide](http://help.opscode.com/faqs/start/how-to-get-started) and have Chef installed. 
 
-*This guide uses Ubuntu 10.04 on Amazon AWS EC2 with Chef 0.10.0.*
+*This guide uses Ubuntu 10.04 on Eucalyptus Community Cloud with Chef 0.10.0.*
 
 ***Note:** At this time, the steps described above have only been tested on the identified platform(s).  Opscode has not researched and does not support alternative steps that may lead to successful completion on other platforms.  Platform(s) supported by this guide may change over time, so please do check back for updates.  If you'd like to undertake this guide on an alternate platform, you may desire to turn to open source community resources for support assistance.*
 
-You can watch a short screencast of this guide [here](http://blip.tv/opscode/build-a-mediawiki-lamp-stack-with-chef-5211811):
-
-<embed src="http://blip.tv/play/hMAggr6OBwA" type="application/x-shockwave-flash" width="600" height="480" wmode="transparent" allowscriptaccess="always" allowfullscreen="true" ></embed>
-
-
-At the end of this guide, you'll have four total Ubuntu 10.04 systems running in Amazon EC2.
+At the end of this guide, you'll have four total Ubuntu 10.04 systems running in the Eucalyptus Community Cloud.
 
 - 1 haproxy load balancer.
 - 2 Apache2 web servers running `mod_php`.
@@ -30,7 +25,7 @@ The **application** cookbook will perform the following steps:
 
 We are also following the recommended pattern of creating a cookbook named after the application that is being deployed which contains application specific setup and configurations. In this case, the **mediawiki** cookbook contains a recipe that will be used for bootstrapping our database.  It also contains the template that will be used to render our `LocalSettings.php` file.
 
-If you don't already have an account with Amazon AWS, go to [Amazon Web Sevices](http://aws.amazon.com/) and click "Sign up". You'll need the access and secret access key credentials from the sign-up later.
+If you don't already have an account with the Eucalyptus Community Cloud, go to [Eucalyptus](http://open.eucalyptus.com/try/community-cloud#Signup) and click "Sign up". You'll need the access and secret access key credentials from the sign-up later.
 
 Environment Setup
 ----
@@ -49,9 +44,9 @@ Obtain the repository used for this guide. It contains all the components requir
 
     sudo apt-get install libxml2-dev libxslt-dev
 
-*All Users*: You'll need some additional gems for Knife to launch instances in Amazon EC2:
+*All Users*: You'll need some additional gems for Knife to launch instances in Eucalyptus:
 
-    sudo gem install knife-ec2
+    sudo gem install knife-eucalyptus
 
 As part of the [Getting Started Guide](help.opscode.com/faqs/start/how-to-get-started), you cloned a chef-repo and copied the Knife configuration file (knife.rb), validation certificate (ORGNAME-validator.pem) and user certificate (USERNAME.pem) to **~/chef-repo/.chef/**. Copy these files to the new php-quick-start repository. You can also re-download the Knife configuration file for your [Organization from the Management Console](http://help.opscode.com/faqs/start/user-environment).
 
@@ -60,43 +55,45 @@ As part of the [Getting Started Guide](help.opscode.com/faqs/start/how-to-get-st
     cp ~/chef-repo/.chef/USERNAME.pem ~/php-quick-start/.chef
     cp ~/chef-repo/.chef/ORGNAME-validator.pem ~/php-quick-start/.chef
 
-Add the Amazon AWS credentials to the Knife configuration file.
+Add the Eucalyptus credentials to the Knife configuration file.
 
     vi ~/php-quick-start/.chef/knife.rb
 
 Add the following two lines to the end:
 
-    knife[:aws_access_key_id] = "replace with the Amazon Access Key ID"
-    knife[:aws_secret_access_key] =  "replace with the Amazon Secret Access Key ID"
+    knife[:euca_access_key_id] = "replace with the Eucalyptus Access Key ID"
+    knife[:euca_secret_access_key] =  "replace with the Eucalyptus Secret Access Key ID"
 
 Once the php-quick-start and knife configuration is in place, we'll work from this directory.
 
     cd php-quick-start
 
-### Amazon AWS EC2
+### Eucalyptus Community Cloud
 
-In addition to the credentials, two additional things need to be configured in the AWS account.
+*The following steps can be completed with the [EucaTools](http://open.eucalyptus.com/wiki/Euca2oolsGuide_v1.3) or [Hybridfox](http://code.google.com/p/hybridfox/).  We will make the assumption you are using Hybridfox.*
 
-Configure the default [security group](http://docs.amazonwebservices.com/AWSEC2/latest/DeveloperGuide/index.html?using-network-security.html) to allow incoming connections for the following ports.
+In addition to the credentials, two additional things need to be configured in the Eucalyptus account.
+
+Configure the default [security group](http://open.eucalyptus.com/wiki/first-steps-eucalyptus-user) to allow incoming connections for the following ports.
 
 * 22 - ssh
 * 80 - haproxy load balancer
 * 22002 - haproxy administrative interface
 * 8080 - apache2 web servers running mod_php
 
-Add these to the default security group for the account using the AWS Console.
+Add these to the default security group for the account using Hyrbidfox.
 
-1. Sign into the [Amazon AWS Console](https://console.aws.amazon.com/s3/home).
-2. Click on the "Amazon EC2" tab at the top.
-3. Click on "Security Groups" in the left sidebar of the AWS Console.
-4. Select the "Default" group in the main pane.
-5. Enter the values shown for each of the ports required. Use "Custom" in the drop-down for 22002 and 8080.
-![aws-management-console](http://img.skitch.com/20101104-qyy612rgcrr9k24ca29qarehc9.jpg)
+1. Launch [Hybridfox](http://code.google.com/p/hybridfox/).
+2. Click on "Security Groups" tab.
+3. Select the "Default" group in the "Your Groups" (left) pane.
+2. Click on the green key icon at the top of the "Group Permissions" (right) pane.
+5. Enter the values shown for each of the ports required. Use "Other" in the drop-down for 22002 and 8080.
+![hybridfox-console](https://img.skitch.com/20110718-x5c2nk38nqeg2qnpxcjty9k3is.jpg)
 
-Create an [SSH Key Pair](http://docs.amazonwebservices.com/AWSEC2/latest/DeveloperGuide/index.html?using-credentials.html#using-credentials-keypair) and save the private key in **~/.ssh**.
+Create an [SSH Key Pair](http://open.eucalyptus.com/wiki/first-steps-eucalyptus-user) and save the private key in **~/.ssh**.
 
-1. In the AWS Console, click on "Key Pairs" in the left sidebar.
-2. Click on "Create Keypair" at the top of the main pane.
+1. In Hybridfox, click on the "KeyPairs" tab.
+2. Click on the green key icon at the top of the "Your Keypairs" pane.
 3. Give the keypair a name like "php-quick-start".
 4. The keypair will be downloaded automatically by the browser and saved to the default Downloads location.
 5. Move the php-quick-start.pem file from the default Downloads location to **~/.ssh** and change permissions so that only you can read the file.  For example,
@@ -152,11 +149,11 @@ Decision Time
 
 It is time for you to decide whether you want a single instance running MediaWiki, or a few instances as a small infrastructure.
 
-In either case, we're going to use m1.small instances with the 32 bit Ubuntu 10.04 image provided [by Canonical](http://uec-images.ubuntu.com/releases/10.04/release-20101228/). The identifier is **ami-7000f019** for the AMI in us-east-1 with instance storage that we will use in this guide.  We'll show you the **knife ec2 server create** sub-command to launch instances.
+In either case, we're going to use m1.small instances with the 32 bit Ubuntu 10.04 image provided [by Canonical](http://open.eucalyptus.com/forum/uec-image-ecc). The identifier is **emi-8A1119CC** for the EMI we will use in this guide.  We'll show you the **knife eucalyptus server create** sub-command to launch instances.
 
 This command will:
 
-* Launch a server on EC2.
+* Launch a server on Eucalyptus.
 * Connect it to the Hosted Chef server.
 * Configure the system with Chef.
 
@@ -167,9 +164,9 @@ Launch Single Instance
 
 Launch the entire stack on a single instance.
 
-    knife ec2 server create -G default -I ami-7000f019 -f m1.small \
+    knife euca server create -G default -I emi-8A1119CC -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[drupal_database_master],role[drupal],recipe[drupal::db_bootstrap],role[drupal_load_balancer]'
+      -r 'role[base],role[mediawiki_database_master],role[mediawiki],recipe[mediawiki::db_bootstrap],role[mediawiki_load_balancer]'
 
 Once complete, the instance will be running MySQL and MediaWiki under Apache2 + mod_php. With only one system, a load balancer is unnecessary.
 
@@ -180,42 +177,42 @@ We will launch one database server, two application servers and one load balance
 
 First, launch the database instance.
 
-    knife ec2 server create -G default -I ami-7000f019 -f m1.small \
+    knife euca server create -G default -I emi-8A1119CC -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[drupal_database_master]'
+      -r 'role[base],role[mediawiki_database_master]'
 
 Once the database master is up, launch one node that will create the database schema and set up the database with default data.
 
-    knife ec2 server create -G default -I ami-7000f019 -f m1.small \
+    knife euca server create -G default -I emi-8A1119CC -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[drupal],recipe[drupal::db_bootstrap]' 
+      -r 'role[base],role[mediawiki],recipe[mediawiki::db_bootstrap]' 
 
 Launch the second application instance w/o the mediawiki::db_bootstrap recipe.
 
-    knife ec2 server create -G default -I ami-7000f019 -f m1.small \
+    knife euca server create -G default -I emi-8A1119CC -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[drupal]' 
+      -r 'role[base],role[mediawiki]' 
 
 Once the second application instance is up, launch the load balancer.
 
-    knife ec2 server create -G default -I ami-7000f019 -f m1.small \
+    knife euca server create -G default -I emi-8A1119CC -f m1.small \
       -S php-quick-start -i ~/.ssh/php-quick-start.pem -x ubuntu \
-      -r 'role[base],role[drupal_load_balancer]'
+      -r 'role[base],role[mediawiki_load_balancer]'
 
-Once complete, we'll have four instances running in EC2 with MySQL, MediaWiki and haproxy up and available to serve traffic.
+Once complete, we'll have four instances running in Eucalyptus with MySQL, MediaWiki and haproxy up and available to serve traffic.
 
 Verification
 ----
 
 Knife will output the fully qualified domain name of the instance when the commands complete. Navigate to the public fully qualified domain name on port 80.
 
-    http://ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com/
+    http://euca-xx-xxx-xx-xxx.eucalyptus.eucasys.com/
 
 The login is admin and the password is mediawiki.
 
 You can access the haproxy admin interface at:
 
-    http://ec2-xx-xxx-xx-xxx.compute-1.amazonaws.com:22002/
+    http://euca-xx-xxx-xx-xxx.eucalyptus.eucasys.com:22002/
 
 Appendix
 ----
@@ -252,24 +249,3 @@ To change the password to something stronger, modify **mysql_root**, **mysql_deb
 Once the entries are modified, simply load the data bag item from the json file:
 
     knife data bag from file apps mediawiki.json
-
-### Non-EC2 Systems
-
-For people not using Amazon EC2, other Cloud computing providers can be used. Supported by knife and fog as of this revision:
-
-* Rackspace Cloud
-
-See the [launch cloud instances page](http://wiki.opscode.com/display/chef/Launch+Cloud+Instances+with+Knife) on the Chef wiki for more information about using Knife to launch these instance types.
-
-For people not using cloud at all, but have their own infrastructure and hardware, use the [bootstrap](http://wiki.opscode.com/display/chef/Knife+Bootstrap) knife command. Note that the run-list specification is slightly different. For the first example of the single instance:
-
-    knife bootstrap IPADDRESS \
-    -r 'role[base],role[mediawiki_database_master],role[mediawiki],recipe[mediawiki::db_bootstrap],role[mediawiki_load_balancer]'
-
-See the contextual help for knife bootstrap on the additional options to set for SSH.
-
-    knife bootstrap --help
-
-### A Note about EC2 Instances
-
-We used m1.small instances. This is a low performance instance size in EC2 and just fine for testing. Visit the Amazon AWS documentation to [learn more about instance sizes](http://aws.amazon.com/ec2/instance-types/).
