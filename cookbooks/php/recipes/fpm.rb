@@ -23,3 +23,10 @@ pkgs.each do |pkg|
     action :upgrade
   end
 end
+
+template "#{node['php']['fpm_conf_dir']}/php.ini" do
+  source "php.ini.erb"
+  owner "root"
+  group "root"
+  mode "0644"
+end
