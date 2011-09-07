@@ -1,3 +1,5 @@
+***TODO: This README hasn't been updated for Drupal, it's inherited from php-quic-start.
+
 This guide describes how to build a PHP application stack using Chef cookbooks available from the [Cookbooks Community Site](http://cookbooks.opscode.com) and Opscode's Hosted Chef. It assumes you followed the [Getting Started Guide](http://help.opscode.com/faqs/start/how-to-get-started) and have Chef installed. 
 
 *This guide uses Ubuntu 10.04 on Amazon AWS EC2 with Chef 0.10.0.*
