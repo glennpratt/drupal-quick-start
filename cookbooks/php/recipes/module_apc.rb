@@ -33,5 +33,6 @@ when "centos", "redhat", "fedora"
 when "debian", "ubuntu"
   package "php-apc" do
     action :install
+    directives(:shm_size => "128M")
   end
 end
