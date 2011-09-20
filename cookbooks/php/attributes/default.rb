@@ -26,20 +26,26 @@ case node["platform"]
 when "centos", "redhat", "fedora"
   default['php']['conf_dir']      = '/etc'
   default['php']['ext_conf_dir']  = '/etc/php.d'
+  default['php']['fpm_conf_dir']  = '/etc'
   default['php']['fpm_user']      = 'nobody'
   default['php']['fpm_group']     = 'nobody'
   default['php']['ext_dir']       = "/usr/#{lib_dir}/php/modules"
 when "debian", "ubuntu"
   default['php']['conf_dir']      = '/etc/php5/cli'
   default['php']['ext_conf_dir']  = '/etc/php5/conf.d'
+  default['php']['fpm_conf_dir']  = '/etc/php5/fpm'
   default['php']['fpm_user']      = 'www-data'
   default['php']['fpm_group']     = 'www-data'
 else
   default['php']['conf_dir']      = '/etc/php5/cli'
   default['php']['ext_conf_dir']  = '/etc/php5/conf.d'
+  default['php']['fpm_conf_dir']  = '/etc/php5/fpm'
   default['php']['fpm_user']      = 'www-data'
   default['php']['fpm_group']     = 'www-data'
 end
+
+default['php']['memory_limit'] = '128M'
+default['php']['max_execution_time'] = '30'
 
 default['php']['url'] = 'http://us.php.net/distributions'
 default['php']['version'] = '5.3.5'
