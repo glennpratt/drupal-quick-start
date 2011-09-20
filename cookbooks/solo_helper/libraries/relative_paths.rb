@@ -19,47 +19,85 @@ class Chef
   module Mixin
     module RelativePaths
       
-      # Creates a given path, including all directories that lead up to it.
-      # Like mkdir_p, but without the leaking.
-      #
-      # === Parameters
-      # file_path<String, Array>:: A string that represents the path to create, 
-      #   or an Array with the path-parts.
-      #
-      # === Returns
-      # The created file_path.
+      # Reduces paths to their most relative versions, mainly to discourage
+      # root relative symlinks, which don't work well when a filesystem is
+      # mounted remotely or at a different path.
       def most_relative_path(source, target)
-        unless file_path.kind_of?(String) || file_path.kind_of?(Array)
-          raise ArgumentError, "file_path must be a string or an array!" 
+        source = source.split(::File::Separator) unless source.kind_of?(Array)
+        target = target.split(::File::Separator) unless target.kind_of?(Array)
+
+        base_dir = []
+        (source & target).each_index do |i|
+          break if target[i] != source[i]
+          base_dir << target[i]
         end
 
-        source = source.split(::File::Separator)
-        target = target.split(::File::Separator)
-        target.each_index do |i|
-          
-        end
-        base_dir = source & target
         source = source - base_dir
         target = target - base_dir
 
-        if file_path.kind_of?(String)
-          file_path = File.expand_path(file_path).split(File::SEPARATOR)
-          file_path.shift if file_path[0] = ''
-          unless file_path[0].match("^#{File::SEPARATOR}")
-            file_path[0] = "#{File::SEPARATOR}#{file_path[0]}"
+        [File.join(source), File.join(target), File.join(base_dir)]
+      end
+    end
+  end
+end
+
+class Chef
+  class Provider
+    class Deploy
+      def relative_symlink(src, dest, options = {})
+        src, dest, base = most_relative_path(src, dest)
+        Chef::Log.info("Linking #{dest} to #{src} from base #{base}")
+        FileUtils.cd(base) do
+          FileUtils.ln_sf(src, dest, options)
+        end
+      end
+
+      def link_current_release_to_production
+        FileUtils.rm_f(@new_resource.current_path)
+        begin
+          relative_symlink(release_path, @new_resource.current_path)
+        rescue => e
+          raise Chef::Exceptions::FileNotFound.new("Cannot symlink current release to production: #{e.message}")
+        end
+        Chef::Log.info "#{@new_resource} linked release #{release_path} into production at #{@new_resource.current_path}"
+        enforce_ownership
+      end
+
+      def run_symlinks_before_migrate
+        links_info = @new_resource.symlink_before_migrate.map { |src, dst| "#{src} => #{dst}" }.join(", ")
+        @new_resource.symlink_before_migrate.each do |src, dest|
+          begin
+            relative_symlink(@new_resource.shared_path + "/#{src}", release_path + "/#{dest}")
+          rescue => e
+            raise Chef::Exceptions::FileNotFound.new("Cannot symlink #{@new_resource.shared_path}/#{src} to #{release_path}/#{dest} before migrate: #{e.message}")
           end
         end
-                
-        file_path.each_index do |i|
-          create_path = File.join(file_path[0, i + 1])
-          unless File.directory?(create_path)
-            Chef::Log.debug("Creating directory #{create_path}")
-            Dir.mkdir(create_path)
-          end 
-        end
-        File.expand_path(File.join(file_path))
+        Chef::Log.info "#{@new_resource} made pre-migration symlinks"
       end
-  
+
+      def link_tempfiles_to_current_release
+        dirs_info = @new_resource.create_dirs_before_symlink.join(",")
+        @new_resource.create_dirs_before_symlink.each do |dir|
+          begin
+            FileUtils.mkdir_p(release_path + "/#{dir}")
+          rescue => e
+            raise Chef::Exceptions::FileNotFound.new("Cannot create directory #{dir}: #{e.message}")
+          end
+        end
+        Chef::Log.info("#{@new_resource} created directories before symlinking #{dirs_info}")
+
+        links_info = @new_resource.symlinks.map { |src, dst| "#{src} => #{dst}" }.join(", ")
+        @new_resource.symlinks.each do |src, dest|
+          begin
+            relative_symlink(@new_resource.shared_path + "/#{src}",  release_path + "/#{dest}")
+          rescue => e
+            raise Chef::Exceptions::FileNotFound.new("Cannot symlink shared data #{@new_resource.shared_path}/#{src} to #{release_path}/#{dest}: #{e.message}")
+          end
+        end
+        Chef::Log.info("#{@new_resource} linked shared paths into current release: #{links_info}")
+        run_symlinks_before_migrate
+        enforce_ownership
+      end
     end
   end
 end
