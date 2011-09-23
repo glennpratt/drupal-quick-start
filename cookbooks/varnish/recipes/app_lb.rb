@@ -26,12 +26,23 @@ if node.run_list.roles.include?(node['varnish']['app_server_role'])
   pool_members << node
 end
 
+if pool_members.empty?
+  raise 'Varnish cannot have an empty pool.'
+end
+
+# Make sure pool members are unique
+unique_members = {}
+pool_members.each do |member|
+  unique_members[member['hostname']] = member
+end
+pool_members = unique_members.values
+
 template "/etc/varnish/default.vcl" do
   source "app_lb.vcl.erb"
   owner "root"
   group "root"
   mode 0644
-  variables( :pool_members => pool_members.uniq,
+  variables( :pool_members => pool_members,
              :backend_port => node["varnish"]["backend_port"],
              :director_type => 'random'
            )
