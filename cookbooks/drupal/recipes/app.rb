@@ -74,14 +74,14 @@ end
 directory "#{app['deploy_to']}/shared/public_files" do
   owner node[:apache][:user]
   group node[:apache][:group]
-  mode '0644'
+  mode '0755'
   recursive true
 end
 
 directory "#{app['deploy_to']}/shared/private_files" do
   owner node[:apache][:user]
   group node[:apache][:group]
-  mode '0644'
+  mode '0755'
   recursive true
 end
 
@@ -186,18 +186,18 @@ deploy_revision app['id'] do
     end
   end
   before_restart do
-    # Fix up file dir perms.
+    # Fix up file directory ownership - PHP *should* own the files directories.
     # TODO - This is hard coded to apache cookbook.
     directory "#{app['deploy_to']}/shared/public_files" do
       owner node[:apache][:user]
       group node[:apache][:group]
-      mode '0644'
+      mode '0755'
     end
 
     directory "#{app['deploy_to']}/shared/private_files" do
       owner node[:apache][:user]
       group node[:apache][:group]
-      mode '0644'
+      mode '0755'
     end
   end
 end
