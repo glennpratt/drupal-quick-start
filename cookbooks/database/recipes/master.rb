@@ -45,7 +45,7 @@ search(:apps) do |app|
       end
     end
     app['databases'].each do |env,db|
-      db_info[env] = db
+      db_info["#{env}:#{db['database']}"] = db
     end
   end
 end
