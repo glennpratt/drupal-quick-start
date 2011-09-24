@@ -161,7 +161,7 @@ deploy_revision app['id'] do
   })
   # TODO drush updatedb
   migrate true
-  migration_command 'drush status'
+  migration_command 'drush sql-connect'
   before_migrate do
     # TODO bash is supposed to be synchronous and execute isn't.
     # Is that right, what are the implications of async here?
