@@ -17,13 +17,25 @@ server {
   root   <%= @params[:docroot] %>;
   index  index.php;
 
-  if (!-e $request_filename) {
-    rewrite  ^/(.*)$  /index.php?q=$1  last;
-    break;
+  location ~ \..*/.*\.php$ {
+    # Deny access to php files outside root.
+    return 403;
   }
 
-  location ~ (\.php)$ {
+  location / {
+    # Return static content first.
+    try_files $uri @drupal;
+  }
+
+  location @drupal {
+    # Some modules enforce no slash (/) at the end of the URL
+    # Else this rewrite block wouldn't be needed (GlobalRedirect)
+    rewrite ^/(.*)$  /index.php?q=$1 last;
+  }
+
+  location ~ \.php$ {
     include fastcgi_params;
+    fastcgi_param  HTTPS $https;
     fastcgi_index index.php;
     fastcgi_connect_timeout 60;
     fastcgi_send_timeout 180;
@@ -34,18 +46,18 @@ server {
     fastcgi_temp_file_write_size 256k;
     fastcgi_intercept_errors on;
     fastcgi_pass 127.0.0.1:9000;
-    fastcgi_param  HTTPS $https;
   }
 
-## Images and static content is treated different
-    location ~* ^.+.(jpg|jpeg|gif|css|png|js|ico|xml)$ {
-      access_log        off;
-      expires           30d;
-    }
+  location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+    expires 30d;
+    log_not_found off;
+    # Allow Drupal to handle missing files (Imagecache, Advagg, 404 page).
+    # TODO Consider making this explicit for fast 404 where possible.
+    try_files $uri @drupal;
+   }
 
-
-## Disable viewing .htaccess & .htpassword
-    location ~ /\.ht {
-        deny  all;
-    }
+  ## Disable viewing .htaccess & .htpassword
+  location ~ /\.ht {
+    deny  all;
+  }
 }
