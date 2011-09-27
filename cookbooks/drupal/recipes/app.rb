@@ -102,13 +102,11 @@ if app.has_key?("deploy_key")
     variables app.to_hash
   end
 end
-Chef::Log.info(search(:node, "*:*", nil, 0, 1).to_json)
-Chef::Log.info(search(:node, "role:#{app["database_master_role"][0]} AND chef_environment:#{node.chef_environment}", nil, 0, 1))
+
 if app["database_master_role"]
   dbm = nil
   # If we are the database master
   if node.run_list.roles.include?(app["database_master_role"][0])
-    Chef::Log.info('NOT what we want...')
     dbm = node
   else
   # Find the database master
@@ -119,8 +117,6 @@ if app["database_master_role"]
     end
   end
 
-
-  Chef::Log.info("dbm: " + dbm.to_json)
   # Assuming we have one...
   if dbm
     template "#{app['deploy_to']}/shared/#{local_settings_file_name}" do
@@ -137,7 +133,9 @@ if app["database_master_role"]
       )
     end
   else
-    Chef::Log.warn("No node with role #{app['database_master_role'][0]}, #{local_settings_file_name} not rendered!")
+    error = "No node with role #{app['database_master_role'][0]}, #{local_settings_file_name} not rendered!"
+    Chef::Log.error(error)
+    raise error
   end
 end
 
