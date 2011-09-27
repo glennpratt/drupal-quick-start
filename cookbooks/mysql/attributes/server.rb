@@ -66,3 +66,4 @@ default['mysql']['tunable']['expire_logs_days']     = 10
 default['mysql']['tunable']['max_binlog_size']      = "100M"
 
 default['mysql']['tunable']['innodb_buffer_pool_size']  = "256M"
+default['mysql']['tunable']['innodb_flush_log_at_trx_commit']  = "1"

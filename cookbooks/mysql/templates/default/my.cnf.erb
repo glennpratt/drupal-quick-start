@@ -113,6 +113,9 @@ max_binlog_size         = <%= node['mysql']['tunable']['max_binlog_size'] %>
 #skip-innodb
 innodb_buffer_pool_size = <%= node['mysql']['tunable']['innodb_buffer_pool_size'] %>
 
+# InnoDB transaction flush to disk interval.
+innodb_flush_log_at_trx_commit = <%= node['mysql']['tunable']['innodb_flush_log_at_trx_commit'] %>
+
 <% case node['platform'] -%>
 <% when "centos", "redhat", "fedora", "ubuntu" -%>
 #
