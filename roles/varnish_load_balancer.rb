@@ -8,6 +8,6 @@ default_attributes(
     :listen_port => "80",
     :backend_address => "127.0.0.1",
     :backend_port => "8080",
-    :app_server_role => "www"
+    :app_server_role => "drupal"
   }
 )
