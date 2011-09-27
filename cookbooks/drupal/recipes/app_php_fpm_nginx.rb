@@ -33,7 +33,7 @@ include_recipe "php::fpm"
 include_recipe "nginx"
 
 # TODO Review wildcard alias, that could get messy.
-server_aliases = [ "#{app['id']}.#{node['domain']}", "#{app['id']}.*", node.fqdn ]
+server_aliases = [ "#{app['id']}.*" ]
 
 # TODO - Make this generic 'cloud'.
 if node.has_key?("ec2")
