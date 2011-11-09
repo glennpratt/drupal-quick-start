@@ -63,3 +63,17 @@ task :bundle_cookbook, :cookbook do |t, args|
 
   FileUtils.rm_rf temp_dir
 end
+
+load 'sites.rake'
+
+desc "Upload everything!?!  Ok, just cookbooks, databags and roles, what about environments?"
+task :upload_all => [ :metadata ]
+task :upload_all do
+  # Upload cookbooks
+  Rake::Task['upload_cookbooks'].execute
+  # Upload roles
+  Rake::Task['roles'].execute
+  # Upload databags
+  puts 'Uploading Roles'
+  Rake::Task['databag:upload_all'].execute
+end
