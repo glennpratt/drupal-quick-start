@@ -1,5 +1,3 @@
-# TODO: This README hasn't been updated for Drupal, it's inherited from php-quick-start.
-
 In short, this repo can install multiple Drupal sites from tarballs, git repo's or drush make files.  
 
 It can install Varnish, Nginx (for SSL proxy or for PHP-FPM), Apache, and combinations of the three.
@@ -7,6 +5,8 @@ It can install Varnish, Nginx (for SSL proxy or for PHP-FPM), Apache, and combin
 It has a long way to go, but those are the goals.
 
 php-quick-start readme below gives you an idea of how nodes are started, but nothing about Drupal or the roles above.
+
+# TODO: The following hasn't been updated for Drupal, it's inherited from php-quick-start.
 
 This guide describes how to build a PHP application stack using Chef cookbooks available from the [Cookbooks Community Site](http://cookbooks.opscode.com) and Opscode's Hosted Chef. It assumes you followed the [Getting Started Guide](http://help.opscode.com/faqs/start/how-to-get-started) and have Chef installed. 
 
