@@ -2,7 +2,7 @@ In short, this repo can install multiple Drupal sites from tarballs, git repo's 
 
 It can install Varnish, Nginx (for SSL proxy or for PHP-FPM), Apache, and combinations of the three.
 
-It has a long way to go, but those are the goals.
+It has a long way to go and needs documentation.
 
 php-quick-start readme below gives you an idea of how nodes are started, but nothing about Drupal or the roles above.
 
